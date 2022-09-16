@@ -24,7 +24,11 @@ func Parse(shareUrl string) (*musicInfo, error) {
 		Logo: logo,
 	}
 
-	getMusicTitle(data)
+	err = getMusicTitle(data)
+
+	if err != nil {
+		return data, err
+	}
 
 	musicId := u.Query().Get("id")
 
@@ -32,8 +36,14 @@ func Parse(shareUrl string) (*musicInfo, error) {
 		return data, nil
 	}
 
-	getSongDetail(data, musicId)
-	getSongUrl(data, musicId)
+	err = getSongDetail(data, musicId)
+	if err != nil {
+		return data, err
+	}
+	err = getSongUrl(data, musicId)
+	if err != nil {
+		return data, err
+	}
 
 	return data, nil
 }
@@ -48,29 +58,30 @@ func extractedLink(shareUrl string) string {
 }
 
 // 获取标题
-func getMusicTitle(data *musicInfo) {
+func getMusicTitle(data *musicInfo) error {
 	val, err := doGet(data.Url)
 	if err != nil {
-		return
+		return err
 	}
 	titles := musicTitleRegexp.FindStringSubmatch(val)
 	if len(titles) > 1 {
 		data.Title = titles[1]
 	}
+	return nil
 }
 
 // 获取歌曲详情
-func getSongDetail(data *musicInfo, musicId string) {
+func getSongDetail(data *musicInfo, musicId string) error {
 	d := fmt.Sprintf(song_detail_format, musicId, musicId)
 	uv := url.Values{}
 	uv.Set("params", aesEncrypt(aesEncrypt(d, key1), key2))
 	uv.Set("encSecKey", enc)
 	r, err := doPost(api_get_song_detail, data.Url, strings.NewReader(uv.Encode()))
 	if err != nil {
-		return
+		return err
 	}
 	if r == nil {
-		return
+		return nil
 	}
 	song := r.Get("songs.0")
 	data.Name = song.Get("name").String()
@@ -82,20 +93,22 @@ func getSongDetail(data *musicInfo, musicId string) {
 		artists = append(artists, result.Get("name").String())
 	}
 	data.Artist = strings.Join(artists, "/")
+	return nil
 }
 
-func getSongUrl(data *musicInfo, musicId string) {
+func getSongUrl(data *musicInfo, musicId string) error {
 	d := fmt.Sprintf(song_url_format, musicId)
 	uv := url.Values{}
 	uv.Set("params", aesEncrypt(aesEncrypt(d, key1), key2))
 	uv.Set("encSecKey", enc)
 	r, err := doPost(api_get_song_url, referer_url, strings.NewReader(uv.Encode()))
 	if err != nil {
-		return
+		return err
 	}
 	if r == nil {
-		return
+		return nil
 	}
 	dt := r.Get("data.0")
 	data.Music = dt.Get("url").String()
+	return nil
 }
