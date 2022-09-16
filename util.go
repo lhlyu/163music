@@ -4,14 +4,25 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/tls"
 	"encoding/base64"
 	"github.com/tidwall/gjson"
 	"io"
 	"net/http"
+	"time"
 )
 
+var timeout = time.Duration(10 * time.Second) //超时时间50ms
+
+var client = &http.Client{
+	Timeout: timeout,
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
+
 func doGet(apiUrl string) (string, error) {
-	resp, err := http.Get(apiUrl)
+	resp, err := client.Get(apiUrl)
 	if err != nil {
 		return "", err
 	}
@@ -30,7 +41,7 @@ func doPost(apiUrl, referer string, body io.Reader) (*gjson.Result, error) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Set("Referer", referer)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
