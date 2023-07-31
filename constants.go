@@ -13,12 +13,12 @@ const (
 )
 
 const (
-	music_http_regexp  = "https:\\/\\/[\\w\\-_]+(\\.[\\w\\-_]+)+([\\w\\-\\.,@?^=%&:/~\\+#]*[\\w\\-\\@?^=%&/~\\+#])?"
+	music_http_regexp  = `(http|https)://([\w-]+\.)+[\w-]+(/[\w-./?%&=]*)?`
 	music_title_regexp = "<title>(.*)</title>"
 )
 
 const (
-	favicon_format = "%s://%s/favicon.ico"
+	favicon = "https://y.music.163.com/favicon.ico"
 	// 歌曲详情参数
 	song_detail_format = "{\"id\":\"%s\",\"c\":\"[{\\\"id\\\":\\\"%s\\\"}]\",\"csrf_token\":\"\"}"
 	song_url_format    = "{\"ids\":\"[%s]\",\"level\":\"standard\",\"encodeType\":\"aac\",\"csrf_token\":\"\"}"

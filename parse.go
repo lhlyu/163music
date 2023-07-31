@@ -12,16 +12,31 @@ func Parse(shareUrl string) (*musicInfo, error) {
 	if link == "" {
 		return nil, ErrorNoFoundShareLink
 	}
-	u, err := url.Parse(link)
+	_, err := url.Parse(link)
 	if err != nil {
 		return nil, err
 	}
 
-	logo := fmt.Sprintf(favicon_format, u.Scheme, u.Host)
+	if strings.Index(link, "http://163cn.tv/") == 0 {
+		// 获取跳转链接
+		newLink := extractedAdaptUrl(link)
+		if newLink == "" {
+			return nil, ErrorNoFoundShareLink
+		}
+		link = newLink
+
+	}
+
+	link = switchUrl(link)
 
 	data := &musicInfo{
 		Url:  link,
-		Logo: logo,
+		Logo: favicon,
+	}
+
+	u, err := url.Parse(link)
+	if err != nil {
+		return nil, err
 	}
 
 	err = getMusicTitle(data)
@@ -46,6 +61,23 @@ func Parse(shareUrl string) (*musicInfo, error) {
 	}
 
 	return data, nil
+}
+
+// 转换url
+func switchUrl(link string) string {
+	if strings.Index(link, "https://music.163.com/song") == 0 {
+		return strings.ReplaceAll(link, "https://music.163.com/song", "https://y.music.163.com/m/song")
+	}
+	return link
+}
+
+// 提取adaptUrl
+func extractedAdaptUrl(link string) string {
+	body, err := doGet(link)
+	if err != nil {
+		return ""
+	}
+	return extractedLink(body)
 }
 
 // 提取分享链接
